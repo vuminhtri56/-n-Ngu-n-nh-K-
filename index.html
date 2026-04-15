@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lớp Định Kỳ Đèn Nguồn (04-2026)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .option-btn { transition: all 0.2s ease; }
+        .option-btn:hover:not(:disabled) { border-color: #6366f1; background-color: #f5f3ff; }
+        .selected { border-color: #6366f1; background-color: #e0e7ff; font-weight: 600; }
+        .correct { background-color: #d1fae5 !important; border-color: #10b981 !important; color: #065f46 !important; position: relative; }
+        .correct::after { content: '✓'; position: absolute; right: 12px; }
+        .wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; position: relative; }
+        .wrong::after { content: '✕'; position: absolute; right: 12px; }
+        .hidden { display: none; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #f3f4f6; }
+        
+        /* Cải tiến Header để chứa nhiều nút */
+        header { min-height: 70px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-12">
+
+    <header class="bg-white/90 backdrop-blur-md shadow-sm border-b sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-2 flex justify-between items-center">
+            <div class="flex items-center space-x-2 shrink-0">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">Q</div>
+                <span class="text-sm md:text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 hidden sm:inline-block">Lớp Đèn - Nguồn</span>
+            </div>
+
+            <div id="dynamicControls" class="flex items-center space-x-2 md:space-x-4">
+                
+                <div id="headerExamControls" class="hidden flex items-center space-x-2">
+                    <div class="flex flex-col items-end">
+                        <div id="timerDisplay" class="px-3 py-1 bg-red-50 text-red-600 rounded-lg font-mono font-bold border border-red-100 text-sm">20:00</div>
+                        <button onclick="finishExam()" class="text-[10px] font-bold text-indigo-600 uppercase hover:underline mt-0.5">NỘP BÀI NGAY</button>
+                    </div>
+                </div>
+
+                <div id="headerStudyControls" class="hidden flex items-center bg-slate-100 rounded-xl p-1">
+                    <button id="hPrevBtn" class="p-2 hover:bg-white rounded-lg transition-all disabled:opacity-20">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <span id="hPageInfo" class="px-2 text-xs font-bold text-slate-600 min-w-[70px] text-center">Trang 1</span>
+                    <button id="hNextBtn" class="p-2 hover:bg-white rounded-lg transition-all disabled:opacity-20">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="location.reload()" class="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Về trang chủ">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 mt-6">
+        
+        <div id="mainMenu" class="py-12 animate-in fade-in duration-500">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Ôn Tập</h2>
+                <p class="text-slate-500 text-lg">Hệ thống câu hỏi ôn tập</p>
+            </div>
+            
+            <div class="grid gap-6">
+                <button onclick="startExamMode()" class="card p-6 flex items-center text-left hover:border-indigo-500 transition-all group">
+                    <div class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-3xl mr-6 group-hover:scale-110 transition-transform">⏱️</div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-slate-800">Chế độ Thi Thử</h3>
+                        <p class="text-slate-500 text-sm">40 câu ngẫu nhiên • 20 phút</p>
+                    </div>
+                </button>
+
+                <button onclick="startStudyMode()" class="card p-6 flex items-center text-left hover:border-violet-500 transition-all group">
+                    <div class="w-16 h-16 bg-violet-100 rounded-2xl flex items-center justify-center text-3xl mr-6 group-hover:scale-110 transition-transform">📖</div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-slate-800">Chế độ Học Tập</h3>
+                        <p class="text-slate-500 text-sm">Học toàn bộ các câu hỏi</p>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <div id="resultSummary" class="hidden card p-8 mb-8 bg-gradient-to-br from-indigo-600 to-violet-700 text-white border-none shadow-xl">
+            <div class="text-center">
+                <p class="text-indigo-100 uppercase tracking-widest text-sm font-bold mb-2">Kết quả bài thi</p>
+                <div class="text-7xl font-black mb-4" id="scoreValue">0/40</div>
+                <div id="feedbackMsg" class="text-lg text-indigo-500 bg-white/90 inline-block px-6 py-2 rounded-full font-bold"></div>
+                <div class="flex justify-center space-x-4 mt-8">
+                    <button onclick="location.reload()" class="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-xl font-bold backdrop-blur-md">Trang chủ</button>
+                    <button onclick="restartExam()" class="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-3 rounded-xl font-bold shadow-lg">Làm bài khác</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="quizContainer" class="hidden space-y-6">
+            <div id="questionsList" class="space-y-6"></div>
+            
+            <div id="paginationFooter" class="flex items-center justify-between p-4 card hidden">
+                <button id="fPrevBtn" class="px-6 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold disabled:opacity-30">Trước</button>
+                <span id="fPageInfo" class="font-bold text-slate-600">Trang 1</span>
+                <button id="fNextBtn" class="px-6 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold disabled:opacity-30">Sau</button>
+            </div>
+
+            <div id="examActionArea" class="py-12 text-center hidden">
+                <button onclick="finishExam()" class="bg-indigo-600 text-white px-12 py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-indigo-700 transition-all">
+                    Nộp Bài & Xem Kết Quả
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="questions.js"></script>
+    <script>
+        let currentMode = ''; 
+        let currentQuestions = [];
+        let userAnswers = {};
+        let isReviewed = false;
+        let timerInterval;
+        let currentPage = 1;
+        const questionsPerPage = 50;
+
+        function startExamMode() {
+            currentMode = 'exam';
+            isReviewed = false;
+            userAnswers = {};
+            currentQuestions = [...QUESTION_BANK].sort(() => 0.5 - Math.random()).slice(0, 40);
+            initUI();
+            startTimer(20 * 60);
+            renderQuestions();
+            document.getElementById('headerExamControls').classList.remove('hidden');
+            document.getElementById('examActionArea').classList.remove('hidden');
+        }
+
+        function restartExam() {
+            document.getElementById('resultSummary').classList.add('hidden');
+            startExamMode();
+            window.scrollTo(0, 0);
+        }
+
+        function startStudyMode() {
+            currentMode = 'study';
+            currentQuestions = QUESTION_BANK;
+            initUI();
+            renderQuestions();
+            document.getElementById('headerStudyControls').classList.remove('hidden');
+            document.getElementById('paginationFooter').classList.remove('hidden');
+            updatePaginationUI();
+        }
+
+        function initUI() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('quizContainer').classList.remove('hidden');
+            document.getElementById('resultSummary').classList.add('hidden');
+            document.getElementById('headerExamControls').classList.add('hidden');
+            document.getElementById('headerStudyControls').classList.add('hidden');
+            document.getElementById('examActionArea').classList.add('hidden');
+            document.getElementById('paginationFooter').classList.add('hidden');
+        }
+
+        function renderQuestions() {
+            const list = document.getElementById('questionsList');
+            list.innerHTML = '';
+            
+            let displayQuestions = currentQuestions;
+            if(currentMode === 'study') {
+                const start = (currentPage - 1) * questionsPerPage;
+                displayQuestions = currentQuestions.slice(start, start + questionsPerPage);
+            }
+
+            displayQuestions.forEach((q, index) => {
+                const qIdx = currentMode === 'study' ? (currentPage - 1) * questionsPerPage + index : index;
+                const div = document.createElement('div');
+                div.className = "card p-6 animate-in slide-in-from-bottom duration-300";
+                
+                let optionsHtml = q.options.map((opt, i) => {
+                    let stateClass = "";
+                    if (currentMode === 'study') {
+                        if (userAnswers[qIdx] !== undefined) {
+                            if (i === q.answer) stateClass = "correct";
+                            else if (userAnswers[qIdx] === i) stateClass = "wrong";
+                        }
+                    } else if (isReviewed) {
+                        if (i === q.answer) stateClass = "correct";
+                        else if (userAnswers[qIdx] === i && i !== q.answer) stateClass = "wrong";
+                        else if (userAnswers[qIdx] === i) stateClass = "selected";
+                    } else if (userAnswers[qIdx] === i) {
+                        stateClass = "selected";
+                    }
+
+                    return `<button onclick="selectOption(${qIdx}, ${i}, this)" 
+                            ${(isReviewed || (currentMode === 'study' && userAnswers[qIdx] !== undefined)) ? 'disabled' : ''}
+                            class="option-btn w-full text-left p-4 border-2 rounded-xl mt-3 flex items-center ${stateClass}">
+                            <span class="w-8 h-8 rounded-full border flex items-center justify-center mr-3 text-xs font-bold uppercase shrink-0">${String.fromCharCode(97 + i)}</span>
+                            <span class="flex-1">${opt}</span>
+                        </button>`;
+                }).join('');
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-md text-xs font-bold uppercase tracking-wider">Câu ${qIdx + 1}</span>
+                    </div>
+                    <p class="text-slate-800 font-semibold text-lg leading-relaxed">${q.question}</p>
+                    <div class="mt-4">${optionsHtml}</div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function selectOption(qIdx, optIdx, btn) {
+            const q = currentQuestions[qIdx];
+            if (currentMode === 'study') {
+                userAnswers[qIdx] = optIdx;
+                renderQuestions(); // Render lại để hiện đáp án ngay
+            } else {
+                userAnswers[qIdx] = optIdx;
+                const buttons = btn.parentElement.querySelectorAll('button');
+                buttons.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            }
+        }
+
+        function startTimer(duration) {
+            clearInterval(timerInterval);
+            const display = document.getElementById('timerDisplay');
+            let timer = duration;
+            timerInterval = setInterval(() => {
+                let m = Math.floor(timer / 60);
+                let s = timer % 60;
+                display.textContent = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+                if (--timer < 0) { clearInterval(timerInterval); finishExam(); }
+            }, 1000);
+        }
+
+        function finishExam() {
+            clearInterval(timerInterval);
+            isReviewed = true;
+            let score = 0;
+            currentQuestions.forEach((q, i) => {
+                if(userAnswers[i] === q.answer) score++;
+            });
+
+            document.getElementById('headerExamControls').classList.add('hidden');
+            document.getElementById('examActionArea').classList.add('hidden');
+            const summary = document.getElementById('resultSummary');
+            summary.classList.remove('hidden');
+            document.getElementById('scoreValue').textContent = `${score}/${currentQuestions.length}`;
+            
+            const feedbackMsg = document.getElementById('feedbackMsg');
+            if (score >= 35) feedbackMsg.textContent = "Con nhà người ta!🏆";
+            else if (score >= 30) feedbackMsg.textContent = "Cũng ra gì đấy! 👍";
+            else feedbackMsg.textContent = "Rớt chứ làm sao nữa! 🫠";
+
+            renderQuestions();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Logic Phân trang (Kết hợp cả Header và Footer)
+        const goToPrev = () => { if(currentPage > 1) { currentPage--; renderQuestions(); updatePaginationUI(); } };
+        const goToNext = () => { if(currentPage * questionsPerPage < currentQuestions.length) { currentPage++; renderQuestions(); updatePaginationUI(); } };
+
+        document.getElementById('hPrevBtn').onclick = goToPrev;
+        document.getElementById('hNextBtn').onclick = goToNext;
+        document.getElementById('fPrevBtn').onclick = goToPrev;
+        document.getElementById('fNextBtn').onclick = goToNext;
+        
+        function updatePaginationUI() {
+            const infoText = `Trang ${currentPage}`;
+            document.getElementById('hPageInfo').textContent = infoText;
+            document.getElementById('fPageInfo').textContent = infoText;
+            
+            const isFirst = currentPage === 1;
+            const isLast = currentPage * questionsPerPage >= currentQuestions.length;
+            
+            document.getElementById('hPrevBtn').disabled = isFirst;
+            document.getElementById('fPrevBtn').disabled = isFirst;
+            document.getElementById('hNextBtn').disabled = isLast;
+            document.getElementById('fNextBtn').disabled = isLast;
+            window.scrollTo(0,0);
+        }
+    </script>
+</body>
+</html>
